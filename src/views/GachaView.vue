@@ -7,7 +7,7 @@
     <div class="floating-ur">
       <div class="ur-glow"></div>
       <div class="ur-label">本期大獎</div>
-      <img src="/images/502.png" class="ur-preview-img" alt="UR Prize" />
+      <img :src="getImageUrl('/images/502.png')" class="ur-preview-img" alt="UR Prize" />
       <div class="ur-name">聖誕節快樂!</div>
     </div>
 
