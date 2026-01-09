@@ -125,13 +125,16 @@ const errorMsg = ref('');
 const animCanvas = ref(null);
 let animationFrameId = null;
 
-// ★ 關鍵：修正圖片路徑的函式
+// 這是目前最萬無一失的寫法
 const getImageUrl = (path) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
-  // 移除路徑開頭的斜線，並補上 Vite 的 BASE_URL (/click_frontend/)
-  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-  return `${import.meta.env.BASE_URL}${cleanPath}`;
+  
+  // 移除開頭所有斜線
+  const cleanPath = path.replace(/^\/+/, '');
+  
+  // 直接回傳完整路徑
+  return `/click_frontend/${cleanPath}`;
 };
 
 const hasUnflippedItems = computed(() => {
