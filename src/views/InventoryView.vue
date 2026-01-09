@@ -48,7 +48,7 @@
             <div class="card-inner">
               <div class="rarity-badge" :class="item.rarity">{{ item.rarity }}</div>
               <div class="img-wrapper">
-                <img :src="item.image" class="item-img" loading="lazy" />
+                <img :src="getImageUrl(item.image)" class="item-img" loading="lazy" />
               </div>
               <div class="item-info">
                 <div class="item-name">{{ item.name }}</div>
@@ -327,7 +327,16 @@ const finishCraft = async () => {
 const openDetail = (item) => { selectedItem.value = item; };
 const closeDetail = () => { selectedItem.value = null; };
 const formatDate = (isoString) => { return new Date(isoString).toLocaleDateString(); };
-
+// 處理圖片路徑的函式
+const getImageUrl = (path) => {
+  // 如果是 http 開頭的網路圖片，直接回傳
+  if (path.startsWith('http')) return path;
+  
+  // 如果是本地圖片，把開頭的 / 去掉，並加上 Vite 的 Base URL
+  // import.meta.env.BASE_URL 會自動判斷是 '/' (本地) 還是 '/click_frontend/' (GitHub)
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  return `${import.meta.env.BASE_URL}${cleanPath}`;
+};
 onMounted(() => { loadInventory(); });
 </script>
 
