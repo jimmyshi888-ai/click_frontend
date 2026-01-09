@@ -7,8 +7,8 @@
     <div class="floating-ur">
       <div class="ur-glow"></div>
       <div class="ur-label">本期大獎</div>
-      <img :src="getImageUrl('/images/501.png')" class="ur-preview-img" alt="UR Prize" />
-      <div class="ur-name">新年快樂!</div>
+      <img :src="getImageUrl('/images/502.png')" class="ur-preview-img" alt="UR Prize" />
+      <div class="ur-name">聖誕節快樂!</div>
     </div>
 
     <div class="gacha-container">
