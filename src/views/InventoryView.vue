@@ -174,8 +174,9 @@ const sortedItems = computed(() => {
 const getImageUrl = (path) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
-  const cleanPath = path.replace(/^\/+/, '');
-  return `/click_frontend/${cleanPath}`;
+  // 把開頭的 / 拿掉，接上 base path (/click_frontend/)
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  return `${import.meta.env.BASE_URL}${cleanPath}`;
 };
 
 // 4. 合成功能
