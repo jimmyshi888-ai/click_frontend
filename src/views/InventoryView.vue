@@ -327,17 +327,17 @@ const finishCraft = async () => {
 const openDetail = (item) => { selectedItem.value = item; };
 const closeDetail = () => { selectedItem.value = null; };
 const formatDate = (isoString) => { return new Date(isoString).toLocaleDateString(); };
-// 處理圖片路徑的函式
 const getImageUrl = (path) => {
-  // 如果是 http 開頭的網路圖片，直接回傳
+  if (!path) return '';
   if (path.startsWith('http')) return path;
   
-  // 如果是本地圖片，把開頭的 / 去掉，並加上 Vite 的 Base URL
-  // import.meta.env.BASE_URL 會自動判斷是 '/' (本地) 還是 '/click_frontend/' (GitHub)
+  // 確保路徑開頭沒有斜線
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-  return `${import.meta.env.BASE_URL}${cleanPath}`;
+  
+  // 手動把路徑接起來，確保中間只有一個斜線
+  // 你的專案路徑應該是 https://jimmyshi888-ai.github.io/click_frontend/
+  return `/click_frontend/${cleanPath}`;
 };
-onMounted(() => { loadInventory(); });
 </script>
 
 <style scoped>
