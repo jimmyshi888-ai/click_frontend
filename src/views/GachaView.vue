@@ -1,14 +1,15 @@
 <template>
   <div class="gacha-page">
-    <!-- 1. 全螢幕背景圖 - 修正路徑 -->
+    <!-- 1. 全螢幕背景圖 - 加入 getImageUrl 修正路徑 -->
     <img :src="getImageUrl('/bg_gacha.png')" class="bg-image" alt="bg" />
 
-    <!-- 懸浮 UR 大獎展示 - 修正路徑 -->
+    <!-- 懸浮 UR 大獎展示 -->
     <div class="floating-ur">
       <div class="ur-glow"></div>
       <div class="ur-label">本期大獎</div>
-      <img :src="getImageUrl('/images/502.png')" class="ur-preview-img" alt="UR Prize" />
-      <div class="ur-name">聖誕節快樂!</div>
+      <!-- 修正為 501 (根據你的新年快樂 ID) -->
+      <img :src="getImageUrl('/images/501.png')" class="ur-preview-img" alt="UR Prize" />
+      <div class="ur-name">新年快樂!</div>
     </div>
 
     <div class="gacha-container">
@@ -86,7 +87,7 @@
               <!-- 正面 (結果) -->
               <div class="flip-card-front">
                 <div class="mini-rarity" :class="item.rarity">{{ item.rarity }}</div>
-                <!-- ★ 修正路徑 -->
+                <!-- ★ 修正結果卡片的圖片路徑 -->
                 <img :src="getImageUrl(item.image)" class="mini-img" />
                 <div class="mini-name">{{ item.name }}</div>
               </div>
@@ -101,6 +102,7 @@
 
         </div>
 
+        <!-- 只有全部翻開後，才顯示「收下獎品」按鈕 -->
         <button v-if="!hasUnflippedItems" class="close-btn" @click="closeResult">
           收下獎品
         </button>
@@ -122,19 +124,21 @@ const showResult = ref(false);
 const resultItems = ref([]);
 const errorMsg = ref('');
 
+// Canvas 動畫變數
 const animCanvas = ref(null);
 let animationFrameId = null;
 
-// 這是目前最萬無一失的寫法
+// ★ 最關鍵的路徑修復函式
 const getImageUrl = (path) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
   
-  // 移除開頭所有斜線
+  // 移除路徑開頭的斜線
   const cleanPath = path.replace(/^\/+/, '');
   
-  // 直接回傳完整路徑
-  return `/click_frontend/${cleanPath}`;
+  // 在 GitHub Pages 上，import.meta.env.BASE_URL 是 "/click_frontend/"
+  // 這樣會正確導向 https://...io/click_frontend/images/...
+  return `${import.meta.env.BASE_URL}${cleanPath}`;
 };
 
 const hasUnflippedItems = computed(() => {
@@ -158,6 +162,7 @@ const handleGacha = async (count) => {
     
     setTimeout(() => {
       userStore.user.coins = data.newCoins;
+      
       resultItems.value = data.items.map(item => ({
         ...item,
         isFlipped: false
@@ -190,7 +195,7 @@ const closeResult = () => {
   resultItems.value = [];
 };
 
-// --- JS Canvas 動畫邏輯 ---
+// --- JS Canvas 動畫邏輯 (能量匯聚) ---
 const startJsAnimation = () => {
   const canvas = animCanvas.value;
   if (!canvas) return;
@@ -244,10 +249,17 @@ const startJsAnimation = () => {
 const stopJsAnimation = () => {
   if (animationFrameId) cancelAnimationFrame(animationFrameId);
 };
+
+window.addEventListener('resize', () => {
+  if (animCanvas.value) {
+    animCanvas.value.width = window.innerWidth;
+    animCanvas.value.height = window.innerHeight;
+  }
+});
 </script>
 
 <style scoped>
-/* --- 樣式部分保持不變 --- */
+/* 樣式保持原樣，確保你的華麗介面不動 */
 .gacha-page {
   min-height: 100vh; width: 100%;
   background-color: #0d1b2a; 
@@ -271,6 +283,8 @@ const stopJsAnimation = () => {
 .dot.N { background: #9e9e9e; } .dot.R { background: #4CAF50; } .dot.SR { background: #9c27b0; } .dot.SSR { background: #ff9800; } .dot.SECRET { background: red; }
 .floating-ur { position: absolute; top: 100px; right: 5%; z-index: 20; text-align: center; animation: floatUR 3s ease-in-out infinite; }
 .ur-preview-img { width: 120px; height: 120px; object-fit: contain; filter: drop-shadow(0 0 10px gold); }
+.ur-label { background: red; color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; }
+.ur-name { color: #ffeb3b; font-weight: bold; text-shadow: 0 2px 0 #000; }
 .btn-group { display: flex; gap: 20px; justify-content: center; }
 .gacha-btn { color: white; border: 2px solid white; padding: 15px 40px; font-size: 1.2rem; border-radius: 50px; cursor: pointer; font-weight: bold; transition: 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
 .single { background: linear-gradient(to bottom, #42a5f5, #1976d2); }
@@ -291,8 +305,8 @@ const stopJsAnimation = () => {
 .flip-card-back.SECRET { border-color: #ff0000; box-shadow: 0 0 30px red, 0 0 60px gold; }
 .mini-img { width: 80%; height: 60%; object-fit: contain; margin-bottom: 10px; }
 .mini-rarity { position: absolute; top: 0; right: 0; padding: 4px 10px; color: white; font-weight: bold; border-bottom-left-radius: 10px; border-top-right-radius: 10px; }
-.N, .mini-rarity.N { background: #9e9e9e; } .R, .mini-rarity.R { background: #4CAF50; } .SR, .mini-rarity.SR { background: #9c27b0; } .SSR, .mini-rarity.SSR { background: #ff9800; } .SECRET, .mini-rarity.SECRET { background: linear-gradient(to right, red, gold); }
-.close-btn { background: #2196F3; color: white; border: none; padding: 15px 50px; font-size: 1.5rem; border-radius: 50px; cursor: pointer; margin-top: 20px; }
+.N, .mini-rarity.N { background: #9e9e9e; } .R, .mini-rarity.R { background: #4CAF50; } .SR, .mini-rarity.SR { background: #9c27b0; } .SSR, .mini-rarity.SSR { background: #ff9800; } .UR, .SECRET, .mini-rarity.UR, .mini-rarity.SECRET { background: linear-gradient(to right, red, gold); }
+.close-btn { background: #2196F3; color: white; border: none; padding: 15px 50px; font-size: 1.5rem; border-radius: 50px; cursor: pointer; font-weight: bold; margin-top: 20px; }
 .anim-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; pointer-events: none; }
 @keyframes shake { 0% { transform: rotate(0deg); } 25% { transform: rotate(5deg); } 75% { transform: rotate(-5deg); } 100% { transform: rotate(0deg); } }
 @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
