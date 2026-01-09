@@ -129,9 +129,9 @@ let animationFrameId = null;
 const getImageUrl = (path) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
-  // 移除路徑開頭所有斜線
+  // 移除開頭所有斜線
   const cleanPath = path.replace(/^\/+/, '');
-  // 回傳：/click_frontend/圖片路徑
+  // 強制補上倉庫路徑
   return `/click_frontend/${cleanPath}`;
 };
 
