@@ -1,7 +1,7 @@
 <template>
   <div class="gacha-page">
     <!-- 1. 全螢幕背景圖 (星空) -->
-    <img src="/images/bg_gacha.jpg" class="bg-image" alt="bg" />
+    <img src="bg_gacha.png" class="bg-image" alt="bg" />
 
     <!-- 懸浮 UR 大獎展示 -->
     <div class="floating-ur">
