@@ -1,13 +1,13 @@
 <template>
   <div class="gacha-page">
     <!-- 1. 全螢幕背景圖 (星空) -->
-    <img :src="getImageUrl('bg_gacha.png')" class="bg-image" alt="bg" />
+    <img src="/images/bg_gacha.jpg" class="bg-image" alt="bg" />
 
     <!-- 懸浮 UR 大獎展示 -->
     <div class="floating-ur">
       <div class="ur-glow"></div>
       <div class="ur-label">本期大獎</div>
-      <img :src="getImageUrl('/images/502.png')" class="ur-preview-img" alt="UR Prize" />
+      <img src="/images/502.png" class="ur-preview-img" alt="UR Prize" />
       <div class="ur-name">聖誕節快樂!</div>
     </div>
 
@@ -87,7 +87,7 @@
               <!-- 正面 (結果) -->
               <div class="flip-card-front">
                 <div class="mini-rarity" :class="item.rarity">{{ item.rarity }}</div>
-                <img :src="getImageUrl(item.image)" class="mini-img" />
+                <img :src="item.image" class="mini-img" />
                 <div class="mini-name">{{ item.name }}</div>
               </div>
 
@@ -251,16 +251,6 @@ window.addEventListener('resize', () => {
     animCanvas.value.height = window.innerHeight;
   }
 });
-// ★ 修改這裡：直接寫死你的倉庫名稱，這是最穩定的做法
-const getImageUrl = (path) => {
-  if (!path) return '';
-  if (path.startsWith('http')) return path;
-  // 移除開頭所有斜線
-  const cleanPath = path.replace(/^\/+/, '');
-  // 強制補上倉庫路徑
-  return `/click_frontend/${cleanPath}`;
-};
-
 </script>
 
 <style scoped>
