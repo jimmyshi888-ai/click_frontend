@@ -48,7 +48,7 @@
             <div class="card-inner">
               <div class="rarity-badge" :class="item.rarity">{{ item.rarity }}</div>
               <div class="img-wrapper">
-                <img :src="'/' + item.image" class="item-img" />
+                <img :src="item.image" class="item-img" />
               </div>
               <div class="item-info">
                 <div class="item-name">{{ item.name }}</div>
@@ -133,7 +133,7 @@
         <!-- 飛入的三張卡片 -->
         <div class="material-group" :class="{ 'merging': animStep >= 1 }">
           <div v-for="(item, idx) in selectedMaterials" :key="idx" class="anim-card" :style="`--i: ${idx}`">
-            <img :src="'/' + item.image" />
+            <img :src="item.image" />
           </div>
         </div>
         
@@ -192,7 +192,7 @@
           <span class="detail-date">獲得於: {{ formatDate(selectedItem.obtained_at) }}</span>
         </div>
         <div class="detail-img-box">
-          <img :src="'/' + selectedItem.image" class="detail-img" />
+          <img :src="selectedItem.image" class="detail-img" />
         </div>
         <h3 class="detail-title">{{ selectedItem.name }}</h3>
         <p class="detail-desc">{{ selectedItem.desc || '這個物品似乎沒有詳細描述...' }}</p>
