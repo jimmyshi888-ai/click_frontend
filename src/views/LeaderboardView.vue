@@ -167,32 +167,15 @@ const handleClaim = async (target) => {
   }
 };
 
-const loadData = async () => {
-  // 1. 嘗試載入排行榜 (獨立處理)
-  try {
-    const data = await api.getLeaderboard();
-    if (data) {
-      topList.value = data.top10 || [];
-      globalTotal.value = data.globalTotal || 0;
-    }
-  } catch (error) {
-    // 這裡只警告，不報錯，避免干擾使用者
-    console.warn('排行榜更新忙碌中...');
-  }
+onMounted(() => {
+  loadData();
+  // 每 30 秒溫柔刷新一次
+  const timer = setInterval(loadData, 30000); 
 
-  // 2. 嘗試載入玩家背包 (獨立處理，並確保 ID 存在)
-  if (userStore.user?.id) {
-    try {
-      const invData = await api.getInventory(userStore.user.id);
-      if (invData && invData.items) {
-        // 取得 ID 列表，用來判斷領獎狀態
-        userInventoryIds.value = invData.items.map(item => item.id); 
-      }
-    } catch (error) {
-      console.warn('背包資料同步中...');
-    }
-  }
-};
+  onUnmounted(() => {
+    clearInterval(timer);
+  });
+});
 </script>
 
 <style scoped>
