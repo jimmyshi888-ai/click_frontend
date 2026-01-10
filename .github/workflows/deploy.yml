@@ -20,15 +20,18 @@ jobs:
         with:
           node-version: 18
           cache: 'npm'
+          # ★ 如果 package.json 在子資料夾，這裡要指定路徑
+          cache-dependency-path: 'click_frontend/package.json'
 
       - name: Install and Build
+        # ★ 這裡告訴管家要進入 click_frontend 資料夾執行
+        working-directory: click_frontend
         run: |
-          # 這裡增加 --include=dev 確保安裝 vite 等工具
-          npm install --include=dev
+          npm install
           npm run build
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: dist
+          folder: click_frontend/dist # ★ 注意這裡也要加路徑
           branch: gh-pages
