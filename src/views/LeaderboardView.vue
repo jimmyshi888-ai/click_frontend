@@ -120,19 +120,29 @@ const getBtnText = (target, recordId) => {
 };
 
 const loadData = async () => {
+  // 1. 嘗試載入排行榜 (獨立處理)
   try {
-    // 1. 載入排行榜
     const data = await api.getLeaderboard();
-    topList.value = data.top10;
-    globalTotal.value = data.globalTotal;
-
-    // 2. 載入玩家背包 (為了檢查領過沒)
-    const invData = await api.getInventory(userStore.user.id);
-    // 我們只需要 ID 列表
-    userInventoryIds.value = invData.items.map(item => item.id); 
-
+    if (data) {
+      topList.value = data.top10 || [];
+      globalTotal.value = data.globalTotal || 0;
+    }
   } catch (error) {
-    console.error(error);
+    // 這裡只警告，不報錯，避免干擾使用者
+    console.warn('排行榜更新忙碌中...');
+  }
+
+  // 2. 嘗試載入玩家背包 (獨立處理，並確保 ID 存在)
+  if (userStore.user?.id) {
+    try {
+      const invData = await api.getInventory(userStore.user.id);
+      if (invData && invData.items) {
+        // 取得 ID 列表，用來判斷領獎狀態
+        userInventoryIds.value = invData.items.map(item => item.id); 
+      }
+    } catch (error) {
+      console.warn('背包資料同步中...');
+    }
   }
 };
 
@@ -157,10 +167,32 @@ const handleClaim = async (target) => {
   }
 };
 
-onMounted(() => {
-  loadData();
-  setInterval(loadData, 10000); // 每 10 秒更新
-});
+const loadData = async () => {
+  // 1. 嘗試載入排行榜 (獨立處理)
+  try {
+    const data = await api.getLeaderboard();
+    if (data) {
+      topList.value = data.top10 || [];
+      globalTotal.value = data.globalTotal || 0;
+    }
+  } catch (error) {
+    // 這裡只警告，不報錯，避免干擾使用者
+    console.warn('排行榜更新忙碌中...');
+  }
+
+  // 2. 嘗試載入玩家背包 (獨立處理，並確保 ID 存在)
+  if (userStore.user?.id) {
+    try {
+      const invData = await api.getInventory(userStore.user.id);
+      if (invData && invData.items) {
+        // 取得 ID 列表，用來判斷領獎狀態
+        userInventoryIds.value = invData.items.map(item => item.id); 
+      }
+    } catch (error) {
+      console.warn('背包資料同步中...');
+    }
+  }
+};
 </script>
 
 <style scoped>
