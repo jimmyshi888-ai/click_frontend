@@ -1,7 +1,7 @@
 <template>
   <div class="gacha-page">
     <!-- 1. 全螢幕背景圖 (星空) -->
-    <img src="bg_gacha.png" class="bg-image" alt="bg" />
+    <img src="/bg_gacha.png" class="bg-image" alt="bg" />
 
     <!-- 懸浮 UR 大獎展示 -->
     <div class="floating-ur">
@@ -87,7 +87,7 @@
               <!-- 正面 (結果) -->
               <div class="flip-card-front">
                 <div class="mini-rarity" :class="item.rarity">{{ item.rarity }}</div>
-                <img :src="item.image" class="mini-img" />
+                <img :src="'/' + item.image" class="mini-img" />
                 <div class="mini-name">{{ item.name }}</div>
               </div>
 
