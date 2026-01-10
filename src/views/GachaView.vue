@@ -1,14 +1,13 @@
 <template>
   <div class="gacha-page">
-    <!-- 1. 全螢幕背景圖 - ★ 修正：加上冒號並呼叫函式 -->
+    <!-- 1. 全螢幕背景圖 (星空) -->
     <img :src="getImageUrl('bg_gacha.png')" class="bg-image" alt="bg" />
 
     <!-- 懸浮 UR 大獎展示 -->
     <div class="floating-ur">
       <div class="ur-glow"></div>
       <div class="ur-label">本期大獎</div>
-      <!-- ★ 修正：拼字錯誤 getImageUrSl -> getImageUrl -->
-      <img :src="getImageUrl('images/502.png')" class="ur-preview-img" alt="UR Prize" />
+      <img :src="getImageUrl('/images/502.png')" class="ur-preview-img" alt="UR Prize" />
       <div class="ur-name">聖誕節快樂!</div>
     </div>
 
@@ -62,18 +61,19 @@
     <!-- Canvas 動畫層 -->
     <canvas v-show="isPlaying" ref="animCanvas" class="anim-canvas"></canvas>
 
-    <!-- 結果彈窗 (翻牌模式) -->
+    <!-- ★ 修改重點：結果彈窗 (翻牌模式) -->
     <div v-if="showResult" class="result-overlay">
       <div class="result-card" :class="{ 'wide-card': resultItems.length > 1 }">
         
         <div class="result-header">
           <div class="congrats-text">✨ 召喚成功！</div>
+          <!-- ★ 跳過按鈕 (如果有未翻開的卡片才顯示) -->
           <button v-if="hasUnflippedItems" class="skip-btn" @click="skipAll">
             ⏩ 跳過動畫
           </button>
         </div>
 
-        <!-- 卡片網格 -->
+        <!-- 卡片網格 (單抽十抽共用邏輯) -->
         <div class="cards-grid" :class="{ 'single-mode': resultItems.length === 1 }">
           
           <div 
@@ -87,12 +87,11 @@
               <!-- 正面 (結果) -->
               <div class="flip-card-front">
                 <div class="mini-rarity" :class="item.rarity">{{ item.rarity }}</div>
-                <!-- ★ 修正：確保呼叫 getImageUrl -->
                 <img :src="getImageUrl(item.image)" class="mini-img" />
                 <div class="mini-name">{{ item.name }}</div>
               </div>
 
-              <!-- 背面 (卡背) -->
+              <!-- 背面 (卡背 + 稀有度光芒) -->
               <div class="flip-card-back" :class="item.rarity">
                 <div class="back-pattern">?</div>
               </div>
@@ -102,6 +101,7 @@
 
         </div>
 
+        <!-- 只有全部翻開後，才顯示「收下獎品」按鈕 -->
         <button v-if="!hasUnflippedItems" class="close-btn" @click="closeResult">
           收下獎品
         </button>
@@ -122,19 +122,12 @@ const isPlaying = ref(false);
 const showResult = ref(false);
 const resultItems = ref([]);
 const errorMsg = ref('');
+
+// Canvas 動畫變數
 const animCanvas = ref(null);
 let animationFrameId = null;
 
-// ★ 路徑修正函式：直接寫死專案路徑前綴，最安全
-const getImageUrl = (path) => {
-  if (!path) return '';
-  if (path.startsWith('http')) return path;
-  // 移除開頭所有斜線
-  const cleanPath = path.replace(/^\/+/, '');
-  // 強制補上倉庫路徑
-  return `/click_frontend/${cleanPath}`;
-};
-
+// 計算屬性：是否還有沒翻開的卡
 const hasUnflippedItems = computed(() => {
   return resultItems.value.some(item => !item.isFlipped);
 });
@@ -142,22 +135,32 @@ const hasUnflippedItems = computed(() => {
 const handleGacha = async (count) => {
   const cost = count * 100;
   if (userStore.user.coins < cost) {
-    alert('金幣不足！');
+    alert('金幣不足！快去點擊貓咪賺錢吧！');
     return;
   }
+
   isPlaying.value = true;
   errorMsg.value = '';
   showResult.value = false;
   startJsAnimation();
+
   try {
     const data = await api.gacha(userStore.user.id, count);
+    
     setTimeout(() => {
       userStore.user.coins = data.newCoins;
-      resultItems.value = data.items.map(item => ({ ...item, isFlipped: false }));
+      
+      // ★ 關鍵：加上 isFlipped: false 狀態
+      resultItems.value = data.items.map(item => ({
+        ...item,
+        isFlipped: false
+      }));
+
       stopJsAnimation();
       isPlaying.value = false;
       showResult.value = true;
     }, 2000);
+
   } catch (error) {
     errorMsg.value = error.message;
     stopJsAnimation();
@@ -165,10 +168,14 @@ const handleGacha = async (count) => {
   }
 };
 
+// ★ 翻單張卡
 const flipCard = (index) => {
-  if (!resultItems.value[index].isFlipped) resultItems.value[index].isFlipped = true;
+  if (!resultItems.value[index].isFlipped) {
+    resultItems.value[index].isFlipped = true;
+  }
 };
 
+// ★ 跳過：全部翻開
 const skipAll = () => {
   resultItems.value.forEach(item => item.isFlipped = true);
 };
@@ -178,7 +185,7 @@ const closeResult = () => {
   resultItems.value = [];
 };
 
-// --- JS Canvas 動畫邏輯 ---
+// --- JS Canvas 動畫邏輯 (保持不變) ---
 const startJsAnimation = () => {
   const canvas = animCanvas.value;
   if (!canvas) return;
@@ -188,6 +195,7 @@ const startJsAnimation = () => {
   const particles = [];
   const centerX = canvas.width / 2;
   const centerY = canvas.height / 2;
+
   for (let i = 0; i < 100; i++) {
     particles.push({
       x: Math.random() * canvas.width,
@@ -197,21 +205,32 @@ const startJsAnimation = () => {
       color: `hsl(${Math.random() * 60 + 30}, 100%, 70%)`
     });
   }
+
+  let frameCount = 0;
   const animate = () => {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    let frameCount = 0; // 這裡簡化邏輯供參考
-    particles.forEach(p => {
-      const dx = centerX - p.x;
-      const dy = centerY - p.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      p.x += (dx / (distance || 1)) * p.speed * 5;
-      p.y += (dy / (distance || 1)) * p.speed * 5;
+    frameCount++;
+    if (frameCount < 90) {
+      particles.forEach(p => {
+        const dx = centerX - p.x;
+        const dy = centerY - p.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        p.x += (dx / distance) * p.speed * 5;
+        p.y += (dy / distance) * p.speed * 5;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+      });
+    } else {
+      const progress = (frameCount - 90) / 30;
+      const radius = progress * Math.max(canvas.width, canvas.height);
       ctx.beginPath();
-      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      ctx.fillStyle = p.color;
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 255, 255, ${1 - progress})`;
       ctx.fill();
-    });
+    }
     animationFrameId = requestAnimationFrame(animate);
   };
   animate();
@@ -219,6 +238,11 @@ const startJsAnimation = () => {
 
 const stopJsAnimation = () => {
   if (animationFrameId) cancelAnimationFrame(animationFrameId);
+  const canvas = animCanvas.value;
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
 };
 
 window.addEventListener('resize', () => {
@@ -227,12 +251,30 @@ window.addEventListener('resize', () => {
     animCanvas.value.height = window.innerHeight;
   }
 });
+// ★ 修改這裡：直接寫死你的倉庫名稱，這是最穩定的做法
+const getImageUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  // 移除開頭所有斜線
+  const cleanPath = path.replace(/^\/+/, '');
+  // 強制補上倉庫路徑
+  return `/click_frontend/${cleanPath}`;
+};
+
 </script>
 
 <style scoped>
-/* 樣式保持不變 */
-.gacha-page { min-height: 100vh; width: 100%; background-color: #0d1b2a; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
-.bg-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; object-position: center bottom; z-index: -1; filter: brightness(0.6); }
+/* --- 基礎樣式 (保持不變) --- */
+.gacha-page {
+  min-height: 100vh; width: 100%;
+  background-color: #0d1b2a; 
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  position: relative; overflow: hidden; font-family: 'Segoe UI', sans-serif;
+}
+.bg-image {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: center bottom; z-index: -1; filter: brightness(0.6);
+}
 .gacha-container { z-index: 10; text-align: center; color: white; position: relative; }
 .title { font-size: 3rem; text-shadow: 0 0 15px #4fc3f7, 2px 2px 0 #000; margin-bottom: 5px; font-weight: 900; letter-spacing: 2px; }
 .subtitle { font-size: 1.1rem; color: #b3e5fc; margin-bottom: 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
@@ -254,47 +296,106 @@ window.addEventListener('resize', () => {
 .ur-preview-img { width: 120px; height: 120px; object-fit: contain; filter: drop-shadow(0 0 10px gold); }
 .ur-name { color: #ffeb3b; font-weight: bold; text-shadow: 0 2px 0 #000; margin-top: 5px; }
 .btn-group { display: flex; gap: 20px; justify-content: center; }
-.gacha-btn { color: white; border: 2px solid rgba(255,255,255,0.5); padding: 15px 40px; font-size: 1.2rem; border-radius: 50px; cursor: pointer; font-weight: bold; transition: all 0.1s; box-shadow: 0 5px 15px rgba(0,0,0,0.3); backdrop-filter: blur(5px); }
+.gacha-btn { color: white; border: 2px solid rgba(255,255,255,0.5); padding: 15px 40px; font-size: 1.2rem; border-radius: 50px; cursor: pointer; font-weight: bold; transition: all 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.3); backdrop-filter: blur(5px); }
 .gacha-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.5); }
 .gacha-btn:active { transform: translateY(2px); }
 .gacha-btn:disabled { filter: grayscale(1); cursor: not-allowed; opacity: 0.7; }
 .single { background: linear-gradient(to bottom, #42a5f5, #1976d2); }
 .multi { background: linear-gradient(to bottom, #ffca28, #f57c00); font-size: 1.3rem; padding: 18px 50px; border: 2px solid #fff; }
 .anim-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; pointer-events: none; }
+
+/* --- ★ 翻牌與結果彈窗樣式 --- */
 .result-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
 .result-card { background: #fff; width: 90%; max-width: 400px; border-radius: 20px; padding: 30px; text-align: center; position: relative; animation: popIn 0.5s; max-height: 90vh; overflow-y: auto; }
 .wide-card { max-width: 1100px; width: 95%; }
+
 .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .congrats-text { font-size: 2rem; color: #333; font-weight: bold; margin: 0 auto; }
 .skip-btn { background: transparent; border: 2px solid #333; border-radius: 20px; padding: 5px 15px; cursor: pointer; font-weight: bold; color: #333; transition: all 0.2s; }
 .skip-btn:hover { background: #333; color: white; }
+
+/* 卡片網格 */
 .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 20px; margin-bottom: 30px; padding: 10px; }
-.cards-grid.single-mode { display: flex; justify-content: center; }
-.flip-card-container { background-color: transparent; width: 160px; height: 220px; perspective: 1000px; cursor: pointer; }
+.cards-grid.single-mode { display: flex; justify-content: center; } /* 單抽置中 */
+
+/* --- ★ 3D 翻轉卡片核心 CSS --- */
+.flip-card-container {
+  background-color: transparent;
+  width: 160px; height: 220px;
+  perspective: 1000px; /* 3D 透視感 */
+  cursor: pointer;
+}
+/* 單抽時卡片變大 */
 .single-mode .flip-card-container { width: 240px; height: 320px; }
-.flip-card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; }
+
+.flip-card-inner {
+  position: relative; width: 100%; height: 100%;
+  text-align: center;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+/* 翻轉狀態 */
 .flip-card-inner.is-flipped { transform: rotateY(180deg); }
-.flip-card-front, .flip-card-back { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.flip-card-front { background-color: #fff; transform: rotateY(180deg); border: 2px solid #eee; }
+
+/* 正面與背面共用設定 */
+.flip-card-front, .flip-card-back {
+  position: absolute; width: 100%; height: 100%;
+  -webkit-backface-visibility: hidden; /* 隱藏背面 */
+  backface-visibility: hidden;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+
+/* --- 正面 (結果) --- */
+.flip-card-front {
+  background-color: #fff;
+  transform: rotateY(180deg); /* 預設先轉過去，翻過來才看到 */
+  border: 2px solid #eee;
+}
 .mini-img { width: 80%; height: 60%; object-fit: contain; margin-bottom: 10px; }
 .mini-name { font-size: 1rem; font-weight: bold; color: #333; }
 .mini-rarity { position: absolute; top: 0; right: 0; font-size: 0.9rem; padding: 4px 10px; border-bottom-left-radius: 10px; border-top-right-radius: 10px; color: white; font-weight: bold; z-index: 5; }
-.flip-card-back { background-color: #2c3e50; color: white; border: 3px solid #555; }
+
+/* --- 背面 (卡背 + 光芒) --- */
+.flip-card-back {
+  background-color: #2c3e50; /* 深色卡背 */
+  color: white;
+  border: 3px solid #555;
+}
 .back-pattern { font-size: 3rem; font-weight: bold; opacity: 0.3; }
+
+/* ★ 卡背光芒 (透漏顏色) */
 .flip-card-back.N { border-color: #9e9e9e; box-shadow: 0 0 10px #9e9e9e; }
 .flip-card-back.R { border-color: #4CAF50; box-shadow: 0 0 15px #4CAF50; }
 .flip-card-back.SR { border-color: #9c27b0; box-shadow: 0 0 20px #9c27b0; }
 .flip-card-back.SSR { border-color: #ff9800; box-shadow: 0 0 25px #ff9800; animation: glowSSR 1.5s infinite alternate; }
-.flip-card-back.SECRET, .flip-card-back.UR { border-color: #ff0000; box-shadow: 0 0 30px #ff0000, 0 0 60px gold; animation: glowUR 0.5s infinite alternate; }
+.flip-card-back.SECRET { border-color: #ff0000; box-shadow: 0 0 30px #ff0000, 0 0 60px gold; animation: glowUR 0.5s infinite alternate; }
+
+/* 稀有度顏色 */
 .N, .mini-rarity.N { background: #9e9e9e; }
 .R, .mini-rarity.R { background: #4CAF50; }
 .SR, .mini-rarity.SR { background: #9c27b0; }
 .SSR, .mini-rarity.SSR { background: #ff9800; }
-.SECRET, .mini-rarity.SECRET, .UR, .mini-rarity.UR { background: linear-gradient(to right, red, blue); }
+.SECRET, .mini-rarity.SECRET { background: linear-gradient(to right, red, blue); }
+
 .close-btn { background: #2196F3; color: white; border: none; padding: 15px 50px; font-size: 1.5rem; border-radius: 50px; cursor: pointer; font-weight: bold; margin-top: 10px; box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4); }
+.close-btn:hover { transform: scale(1.05); }
+.error-msg { color: #ff5252; margin-top: 20px; font-weight: bold; background: rgba(0,0,0,0.8); padding: 5px 10px; border-radius: 5px; }
+
 @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @keyframes shake { 0% { transform: rotate(0deg); } 25% { transform: rotate(5deg); } 75% { transform: rotate(-5deg); } 100% { transform: rotate(0deg); } }
-@keyframes glowUR { from { box-shadow: 0 0 20px red; } to { box-shadow: 0 0 50px gold; } }
+@keyframes floatUR { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+@keyframes rotateGlow { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
 @keyframes pulseText { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-@media (max-width: 768px) { .floating-ur { display: none; } .rates-grid { flex-direction: column; gap: 5px; } .title { font-size: 2rem; } }
+@keyframes glowSSR { from { box-shadow: 0 0 10px #ff9800; } to { box-shadow: 0 0 30px #ff9800; } }
+@keyframes glowUR { from { box-shadow: 0 0 20px red; } to { box-shadow: 0 0 50px gold; } }
+
+/* 手機版適配 */
+@media (max-width: 768px) {
+  .floating-ur { display: none; }
+  .rates-grid { flex-direction: column; gap: 5px; }
+  .title { font-size: 2rem; }
+}
 </style>
