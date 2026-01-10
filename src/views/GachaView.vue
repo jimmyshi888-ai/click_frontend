@@ -87,7 +87,7 @@
               <!-- 正面 (結果) -->
               <div class="flip-card-front">
                 <div class="mini-rarity" :class="item.rarity">{{ item.rarity }}</div>
-                <img :src="'/' + item.image" class="mini-img" />
+                <img :src="item.image" class="mini-img" />
                 <div class="mini-name">{{ item.name }}</div>
               </div>
 
