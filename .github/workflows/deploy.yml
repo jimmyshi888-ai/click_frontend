@@ -15,7 +15,6 @@ jobs:
       - name: Checkout 
         uses: actions/checkout@v3
 
-      # ★ 新增這一步：確保環境有 Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -24,7 +23,8 @@ jobs:
 
       - name: Install and Build
         run: |
-          npm install
+          # 這裡增加 --include=dev 確保安裝 vite 等工具
+          npm install --include=dev
           npm run build
 
       - name: Deploy to GitHub Pages
