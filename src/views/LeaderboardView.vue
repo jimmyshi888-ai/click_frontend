@@ -91,7 +91,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue'; 
 import { useUserStore } from '@/store.js';
 import { api } from '@/api.js';
 
