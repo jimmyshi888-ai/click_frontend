@@ -88,8 +88,10 @@ const saveData = async () => {
 };
 
 onMounted(() => {
-  autoSaveTimer = setInterval(saveData, 3000);
+  // 將 3000 (3秒) 改成 10000 (10秒)
+  autoSaveTimer = setInterval(saveData, 10000); 
 });
+
 
 onUnmounted(() => {
   if (autoSaveTimer) clearInterval(autoSaveTimer);
